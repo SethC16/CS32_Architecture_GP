@@ -1,5 +1,5 @@
 # Let's build a data driven machine!
-
+import sys
 # What do we need to have our machine working?
 """
 - Some sort of memory
@@ -12,38 +12,49 @@
 """
 
 # Operations that we can perform
-PRINT_VLAD = 1
-HALT = 2
+HALT = 1
+PRINT_VLAD = 2
 PRINT_NUM = 3
-PRINT_REG = 4
-SAVE = 5
+SAVE = 4
+PRINT_REG = 5
 ADD = 6
+# TODO: PUSH and POP
+PUSH = 7
+POP = 8
 SUB = 23
 LDI = 0b10000010
 PRN = 0b01000111
 
-# some sort of memory
-mem = [0] * 256
-memory = [
-    PRINT_VLAD,
-    SAVE,
-    300,
-    3,
-    PRINT_REG,
-    3,
-    SAVE,
-    24,
-    2,
-    ADD,
-    2,
-    3,
-    PRINT_REG,
-    2,
-    PRINT_NUM,
-    120,
-    PRINT_VLAD,
-    HALT
-]
+# some sort of memory (lets refactor this to load in opcodes from a file)
+
+def load_memory(filename):
+    # TODO do some logic here
+    try:
+        address = 0
+        with open(filename) as f:
+            for line in f:
+                comment_split = line.split("#")
+                n = comment_split[0].strip()
+
+                if n == '':
+                    continue
+
+                val = int(n, 2)
+                # store val in memory
+                memory[address] = val
+
+                address += 1
+
+                # print(f"{x:08b}: {x:d}")
+
+    except FileNotFoundError:
+        print(f"{sys.argv[0]}: {filename} not found")
+        sys.exit(2)
+
+
+memory = [0] * 256
+
+
 # keep track of running?
 running = True
 
@@ -52,8 +63,25 @@ pc = 0
 # Some local var holders [registers]
 registers = [0] * 10
 
+# TODO: Stack Pointer (R7) as per specs
+# index of the registers list 
+# SP
+SP = 7
+
+# to use to store where the top of the stack is
+# 0xF4 (244)
+registers[SP] = 244
+
 # size of opcode
 op_size = 1
+
+# grab any args
+if len(sys.argv) != 2:
+    print("usage: simple.py filename")
+    sys.exit(1)
+# load opcodes in to memory
+load_memory(sys.argv[1])
+
 
 # REPL to run once per cycle of CPU
 # inside this we will have our FETCH, DECODE, EXECUTE CYCLE
@@ -97,6 +125,38 @@ while running:
         registers[reg_index_a] -= registers[reg_index_b]
 
         op_size = 3
+    
+    # PUSH
+    elif cmd == PUSH:
+        # setup
+        reg_index = memory[pc + 1]
+        val = registers[reg_index]
+
+        # decrememt Stack Pointer
+        registers[SP] -= 1
+
+        # insert val on to the stack
+        memory[registers[SP]] = val
+
+        op_size = 2
+
+    # TODO: POP
+    elif cmd == POP:
+        # setup
+        reg_index = memory[pc + 1]
+        val = memory[registers[SP]]
+
+        # take value from stack and put it in reg
+        registers[reg_index] = val
+
+        # increment Stack Pointer
+        registers[SP] += 1
+
+        op_size = 2
+
+    else:
+        print(f"Invalid Instruction: {cmd}")
+        running = False
 
 
     pc += op_size

@@ -51,6 +51,7 @@ b * 1 => 11
 11 + 16 + 32 + 64
 27 + 32 + 64
 59 + 64
+
 11 + 112
 # returning a result in decimal
 123
@@ -159,4 +160,4 @@ def to_decimal(num_string, base):
     return value
 
 print(to_decimal("7b", 16))  # => 123
-print(to_decimal("010111010110101", 2))  # => 123
+print(to_decimal("010111010110101", 2))  # => 4
